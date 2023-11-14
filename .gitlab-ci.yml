@@ -1,0 +1,93 @@
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  IMAGE_LATEST: $CI_REGISTRY_IMAGE:latest
+  STACK_DEV: malte-bachelor-bachelor1
+  SERVICE_NAME: web
+
+# -- build --
+
+build:
+  stage: build
+  needs: [ ]
+  tags: [ dind ]
+  script:
+    - docker build -t $IMAGE .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $IMAGE
+  only: [ master ]
+
+build:staging:
+  stage: build
+  needs: [ ]
+  tags: [ dind ]
+  script:
+    - docker build --build-arg configuration=staging -t $IMAGE .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $IMAGE
+  only: [ staging ]
+
+build:live:
+  stage: build
+  needs: [ ]
+  tags: [ dind ]
+  script:
+    - docker build --build-arg configuration=production -t $IMAGE .
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push $IMAGE
+  only: [ tags ]
+
+tag-latest:
+  stage: build
+  tags: [ dind ]
+  needs: [ build:live ]
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker pull $IMAGE
+    - docker tag $IMAGE $IMAGE_LATEST
+    - docker push $IMAGE_LATEST
+  only:
+    - tags
+
+# -- deploy --
+
+.deploy:
+  stage: deploy
+  needs: [ build ]
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker service update --image $IMAGE --with-registry-auth $STACK_SERVICE
+
+deploy:dev:
+  extends: .deploy
+  tags: [ 28dev2 ]
+  before_script:
+    - export STACK_SERVICE=${STACK_DEV}_${SERVICE_NAME}
+  environment:
+    name: $CI_COMMIT_REF_SLUG
+    url: https://malte-bachelor.team-planner.dev2.28apps-software.de
+  only: [ master ]
+
+deploy:staging:
+  extends: .deploy
+  tags: [ 28dev2 ]
+  needs: [ build:staging ]
+  before_script:
+    - export STACK_SERVICE=${STACK_STAGING}_${SERVICE_NAME}
+  environment:
+    name: $CI_COMMIT_REF_SLUG
+    url: https://staging.malte-bachelor.team-planner.dev2.28apps-software.de
+  only: [ staging ]
+
+deploy-live:
+  extends: .deploy
+  needs: [ tag-latest ]
+  tags:
+    - TODO-prod
+  before_script:
+    - export STACK_SERVICE=${STACK_LIVE}_${SERVICE_NAME}
+  when: manual
+  environment:
+    name: production
+    # TODO
+    url: https://TODO
+  only: [ tags ]

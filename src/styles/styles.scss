@@ -1,0 +1,71 @@
+html, body, html > * {
+  overflow: auto;
+}
+
+html, body {
+  height: 100%;
+}
+
+.table {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+#app {
+  margin: 0;
+  padding: 0;
+  left: 0;
+  right: 0;
+  position: absolute;
+  height: 100%;
+}
+
+.v-btn {
+  text-transform: none;
+}
+
+.fill-width {
+  width: 100%;
+}
+
+.my-fill-height {
+  height: 100%;
+}
+
+.issue-type {
+  width: 15px;
+  height: 15px;
+}
+
+.epic {
+  background: mediumpurple;
+}
+
+.userStory {
+  background: lime;
+}
+
+.task {
+  background: dodgerblue;
+}
+
+.subTask {
+  background: deepskyblue;
+}
+
+.bug {
+  background: red;
+}
+
+.v-field--disabled {
+  opacity: 1;
+}
+
+.v-expansion-panel-text.list-like > .v-expansion-panel-text__wrapper {
+  padding-right: 0;
+}
+
+.my-color {
+  background: rgba(154, 152, 152, 0.4);
+}
